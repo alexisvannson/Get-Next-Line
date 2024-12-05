@@ -6,85 +6,66 @@
 /*   By: avannson  <marvin@42.fr>                   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/04 13:50:07 by avannson          #+#    #+#             */
-/*   Updated: 2024/12/04 14:47:26 by avannson         ###   ########.fr       */
+/*   Updated: 2024/12/05 01:40:40 by avannson         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-char    *get_next_line(int fd)
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+
+int get_len(int fd)
 {
     int		read_items;
-    char	buffer;
-
-    read_items = 1;
-	if (fd == -1)
-	{
-		ft_putstr("Cannot read file.\n");
-		return ;
-	}
+	void	*c;
+    int     count;
+    
+    count = 0;
+    c = 0;
+	read_items = 1;
     while (read_items > 0)
 	{
-		read_items = read(fd, buffer, 1);
-		if (buffer == '\n')
-            break;
+		read_items = read(fd, c, 1);
+        count++;
+		if ((int)c == '\n')
+            return (count); 
 	}
+    return(-1);
 }
 
-#include <fcntl.h>
-#include <unistd.h>
-
-#define BUFFER_SIZE 20
-
-void	ft_putstr(char *src)
+char    *get_next_line(int fd)
 {
-	int	i;
-
-	i = 0;
-	while (src[i])
-	{
-		write(1, &src[i], 1);
-		i++;
-	}
-}
-
-void	ft_display_file(char *filename)
-{
-	int		fd;
-	int		read_items;
-	char	buffer[BUFFER_SIZE];
+    char	*str;
+    void    *c;
+    int     len;
+    int     reading;
+    int     i;
     
-
-	read_items = 1;
-	fd = open(filename, O_RDONLY);
-	if (fd == -1)
+    reading = 1;
+    c = 0;
+    len = get_len(fd);
+    str = malloc((len + 1) * sizeof(char));
+    if (!str)
+        return (0);
+    i = 0;
+    while (reading > 0)
 	{
-		ft_putstr("Cannot read file.\n");
-		return ;
-	}
-	while (read_items > 0)
-	{
-		read_items = read(fd, buffer, BUFFER_SIZE);
-		write(1, buffer, read_items);
-	}
-	if (read_items == -1)
-	{
-		close(fd);
-		ft_putstr("Cannot read file.\n");
-	}
-	close(fd);
+		reading= read(fd, c, 1);
+        str[i] = (char)c;
+        i++;
+    }
+    str[i] = '\0';
+    return (str);
 }
 
-int	main(int argc, char **argv)
+int     main(int argc, char **argv)
 {
-	if (argc == 1)
-	{
-		ft_putstr("File name missing.\n");
-		return (-1);
-	}
-	if (argc > 2)
-	{
-		ft_putstr("Too many arguments.\n");
-		return (-1);
-	}
-	ft_display_file(argv[1]);
-	return (0);
+    int     fd;
+
+    if (! argc)
+        return (-1);
+    fd = open(argv[1], O_RDONLY);
+    printf("%s", get_next_line(fd));
+    return (0);
 }
