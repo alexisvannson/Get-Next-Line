@@ -3,107 +3,126 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: avannson  <marvin@42.fr>                   +#+  +:+       +#+        */
+/*   By: avannson <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/12/04 13:50:07 by avannson          #+#    #+#             */
-/*   Updated: 2024/12/05 11:24:06 by avannson         ###   ########.fr       */
+/*   Created: 2025/01/12 09:03:27 by avannson          #+#    #+#             */
+/*   Updated: 2025/01/12 12:59:54 by avannson         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <fcntl.h>
+#include "get_next_line.h"
 #include <stdlib.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 
 
-int get_len(int fd)
+int is_in(char *str, char c)
 {
-    int		read_items;
-	void	*c;
-    int     count;
-    uintptr_t val;
-    
-    count = 0;
-    c = 0;
-	read_items = 1;
-    while (read_items > 0)
-	{
-		read_items = read(fd, c, 1);
-        count++;
-        val = (uintptr_t) c ;
-		if (val == '\n')
-            return (count); 
-	}
-    return(-1);
-}
+    int i;
 
-int	ft_strlen(char *str)
-{
-	int	i;
-
-	i = 0;
-	while (str[i])
-		i++;
-	return (i);
-}
-
-size_t	ft_strlcat(char *dest, const char *src, size_t len)
-{
-	size_t	dest_len;
-	size_t	src_len;
-	size_t	i;
-
-	if (!dest || !src)
-		return (0);
-	dest_len = ft_strlen(dest);
-	src_len = ft_strlen((char *)src);
-	// If `len` is smaller than or equal to the length of `dest`, return `len + src_len`
-	if (len <= dest_len)
-		return (len + src_len);
-
-	// Start appending from the end of `dest`
-	i = 0;
-	while (src[i] && (dest_len + i < len - 1))
-	{
-		dest[dest_len + i] = src[i];
-		i++;
-	}
-	dest[dest_len + i] = '\0';
-
-	return (dest_len + src_len);
-}
-
-char    *get_next_line(int fd)
-{
-    char	*str;
-    void    *c;
-    int     len;
-    int     reading;
-    size_t  i;
-    
-    reading = 1;
-    c = 0;
-    len = get_len(fd);
-    str = malloc((len + 1) * sizeof(char));
-    if (!str)
-        return (0);
-    while (reading > 0)
-	{
-		reading= read(fd, c, 1);
-        i = ft_strlcat(str, c, 1);
-        printf("reading %i wesh int %zu et c %s\n",reading, i, (char*)c);
+    i = 0;
+    while (str[i])
+    {
+        if (str[i] == c)
+            return (1);
+        i++;
     }
-    printf(" sayee %s", str);
-    return (str);
-}
-
-int     main(int argc, char **argv)
-{
-    int     fd;
-
-    if (! argc)
-        return (-1);
-    fd = open(argv[1], O_RDONLY);
-    printf("%s", get_next_line(fd));
     return (0);
 }
+
+char	*ft_getline(char* stash)
+{
+	int	i;
+	char*	line;
+
+	i = 0;
+	while (stash[i] != '\n')
+		i++;
+	line = malloc((i + 2) * sizeof(char));
+	if (!line)
+		return(0);
+	i = 0;
+	while (stash[i] != '\n')
+	{
+		line[i] = stash[i];
+		i++;
+	}
+	line[i] = '\n';
+	line[i + 1] = '\0';
+	return(line);
+}
+
+char *get_next_line(int fd)
+{
+	static char*	stash;
+	char	*line;
+	char	*buffer;
+	char	*temp;
+	int	reader;
+
+	if (fd <= 0 || BUFFER_SIZE <= 0)
+	{
+		return(0);
+	}
+	buffer = malloc((BUFFER_SIZE + 1) * sizeof(char));
+	if (!buffer)
+		return(0);
+	if (!stash)
+		stash = ft_strdup("");
+	reader = BUFFER_SIZE;
+	while(!(is_in(stash,'\n')) && (reader == BUFFER_SIZE))
+	{
+		reader = read(fd, buffer, BUFFER_SIZE);
+		if (reader < 0)
+		{
+			free(buffer);
+			return (0);
+		}
+		buffer[reader] = '\0';
+		temp = ft_strjoin(stash, buffer);
+		if (!temp)
+		{
+			free(buffer);
+			free(stash);
+			return(0);
+		}
+		free(stash);
+		stash = temp;
+		//check si le malloc a fail et free 
+	}
+	line = ft_getline(stash);
+	stash = ft_keep(stash, '\n');//modif pour remonter le reste plutot que de creer une nouvelle addresse
+	free(buffer);
+	return(line);
+}
+
+int main(int argc, char **argv)
+{
+    char    *line;
+    int     fd;
+    
+    if (argc == 1)
+    {
+        return (-1);
+    }
+    if (argc > 2)
+    {
+        return (-1);
+    }
+
+    fd = open(argv[1], O_RDONLY);
+    if (fd == -1)
+    {
+        return (-1);
+    }
+    while ((line = get_next_line(fd)) != NULL)
+    {
+        printf("%s",line);
+        //free(line);
+    }
+
+    close(fd);
+    return (0);
+}
+
