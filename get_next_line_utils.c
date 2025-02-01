@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <stdlib.h>
 #include "get_next_line.h"
 
 size_t	ft_strlen(const char *str)
@@ -23,15 +22,19 @@ size_t	ft_strlen(const char *str)
 	return (i);
 }
 
-char	*ft_strjoin(char *s1, char *s2)
+char	*ft_strjoin(char const *s1, char const *s2)
 {
-	int		i;
-	int		j;
-	char	*final;
+	int			i;
+	int			j;
+	char		*final;
+	size_t		total_len;
 
-	final = malloc(ft_strlen((char *)s1) + ft_strlen((char *)s2) + 1);
+	if (!s1 || !s2)
+		return (NULL);
+	total_len = ft_strlen(s1) + ft_strlen(s2);
+	final = malloc((total_len + 1) * sizeof(char));
 	if (!final)
-		return (0);
+		return (NULL);
 	i = 0;
 	j = 0;
 	while (s1[i])
@@ -47,35 +50,45 @@ char	*ft_strjoin(char *s1, char *s2)
 	final[i + j] = '\0';
 	return (final);
 }
-/*
-char	*ft_strrchr(const char *s, int c)
-{
-	char	*last_occurrence;
 
-	last_occurrence = NULL;
-	while (*s)
-	{
-		if (*s == (unsigned char)c)
-			last_occurrence = (char *)s;
-		s++;
-	}
-	if ((unsigned char)c == '\0')
-		return ((char *)s);
-	return (last_occurrence);
-}*/
-
-char	*ft_keep(const char *str, int search_str)
+size_t	ft_strlcpy(char *dst, const char *src, size_t size)
 {
-	while (*str)
+	size_t		i;
+	size_t		src_len;
+
+	i = 0;
+	src_len = 0;
+	while (src[src_len])
+		src_len++;
+	if (size == 0)
+		return (src_len);
+	while (src[i] && i < (size - 1))
 	{
-		if (*str == (char)search_str)
-		{
-			str++;
-			return ((char *)str);
-		}
-		str++;
+		dst[i] = src[i];
+		i++;
 	}
-	return (0);
+	dst[i] = '\0';
+	return (src_len);
+}
+
+char	*ft_keep(char *str, int search_str)
+{
+	char	*remainder;
+	int		i;
+	int		len;
+
+	i = 0;
+	len = 0;
+	while (str[i] && str[i] != (char)search_str)
+		i++;
+	if (str[i] == (char)search_str)
+		i++;
+	len = ft_strlen(&str[i]);
+	remainder = malloc(sizeof(char) * (len + 1));
+	if (!remainder)
+		return (NULL);
+	ft_strlcpy(remainder, &str[i], len + 1);
+	return (remainder);
 }
 
 char	*ft_strdup(const char *s1)
@@ -83,12 +96,14 @@ char	*ft_strdup(const char *s1)
 	char	*cpy;
 	int		i;
 
+	if (!s1)
+		return (NULL);
 	i = 0;
 	while (s1[i])
 		i++;
-	cpy = malloc(i + 1);
+	cpy = malloc((i + 1) * sizeof(char));
 	if (!cpy)
-		return (0);
+		return (NULL);
 	i = 0;
 	while (s1[i])
 	{

@@ -4,7 +4,7 @@ CC			= cc
 CFLAGS		= -Wall -Wextra -Werror
 RM			= rm -f
 
-SRCS		= get_next_line.c \
+SRCS		= get_next_line.c  main.c \
 			get_next_line_utils.c
 
 OBJS		= $(SRCS:.c=.o)
